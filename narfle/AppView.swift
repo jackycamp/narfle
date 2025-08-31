@@ -87,6 +87,7 @@ struct FooView: View {
 
 struct ReaderView: View {
     @EnvironmentObject var appState: AppState 
+    @State private var htmlFiles = []
 
     var body: some View {
         VStack {
@@ -110,19 +111,21 @@ struct ReaderView: View {
         // - Memory limits: iOS will terminate your app if it uses too much memory (better than system crash)
         //
         print("loading file: \(appState.selectedFile)")
+        let fileManager = FileManager.default
+        let tempDir = fileManager.temporaryDirectory.appendingPathComponent("epub_structure_\(UUID().uuidString)")
+        print("created sandbox dir: \(tempDir)")
 
+        // extraction here
         do {
             let url = appState.selectedFile!
             guard url.startAccessingSecurityScopedResource() else { return }
             defer { url.stopAccessingSecurityScopedResource() }
 
-            let fileManager = FileManager.default
 
             let data = try Data(contentsOf: url)
-            let tempDir = fileManager.temporaryDirectory.appendingPathComponent("epub_structure_\(UUID().uuidString)")
             
             try fileManager.createDirectory(at: tempDir, withIntermediateDirectories: true)
-            defer { try? fileManager.removeItem(at: tempDir) }
+            // defer { try? fileManager.removeItem(at: tempDir) }
 
             print("data count: \(data.count)")
 
@@ -227,6 +230,53 @@ struct ReaderView: View {
         } catch {
             print("Error loading file: \(error)")
         }
+
+        var htmlFiles: [String] = []
+
+        func searchDirectory(_ dir: URL, relativePath: String = "") {
+            do {
+                print("checking contents")
+                let contents = try fileManager.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey])
+                print("got contents")
+                
+                for item in contents {
+                    let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey])
+                    let filename = item.lastPathComponent
+                    let fullPath = relativePath.isEmpty ? filename : "\(relativePath)/\(filename)"
+                    
+                    if resourceValues.isDirectory == true {
+                        searchDirectory(item, relativePath: fullPath)
+                    } else {
+                        let ext = item.pathExtension.lowercased()
+                        if ext == "html" || ext == "xhtml" || ext == "htm" {
+                            htmlFiles.append(fullPath)
+                        }
+                    }
+                }
+            } catch {
+                print("Error reading directory: \(error)")
+            }
+        }
+
+        func extractNumber(from filename: String) -> Int {
+            let numbers = filename.components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap { Int($0) }
+            return numbers.first ?? 0
+        }
+
+        print("searching directory: \(tempDir)")
+        searchDirectory(tempDir)
+        self.htmlFiles = htmlFiles.sorted { a, b in
+            let aNum = extractNumber(from: a)
+            let bNum = extractNumber(from: b)
+            return aNum < bNum
+        }
+
+        print("html files: \(self.htmlFiles)")
+        // consider using Application Support directory or caches instead of temp directory
+        // let appSupportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        // let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        // defer { try? fileManager.removeItem(at: tempDir) }
+
         return
 
     }
