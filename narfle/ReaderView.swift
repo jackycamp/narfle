@@ -8,12 +8,20 @@ import SwiftSoup
 struct ReaderView: View {
     @EnvironmentObject var appState: AppState 
     @State private var dir: URL?
-    @State private var htmlFiles = []
+    @State private var htmlFiles: [String] = []
+    @State private var pageIndex = 1 // FIXME: 
     @State private var isLoading = true
 
     var body: some View {
         VStack {
-            Text("Narfle reader")
+            if isLoading {
+                Text("Narfle reader (loading)")
+            } else {
+                PageReaderView(
+                    filePath: htmlFiles[pageIndex],
+                    baseDir: dir! // FIXME:
+                )
+            }
         }
         .onAppear {
             loadFile()
@@ -220,3 +228,74 @@ struct ReaderView: View {
         }
     }
 }
+
+enum ContentElement {
+    case heading(text: String)
+    case paragraph(text: String)
+}
+
+struct PageReaderView: View {
+    let filePath: String
+    let baseDir: URL
+
+    @State private var parsedContent: [ContentElement] = []
+    @State private var isLoading = true
+
+    var body: some View {
+        VStack {
+            if isLoading {
+                Text("page loading")
+            } else {
+                ForEach(Array(parsedContent.enumerated()), id: \.offset) { index, element in
+                    buildContentView(for: element)
+                }
+            }
+        }
+        .onAppear {
+            loadPage()
+        }
+    }
+
+    @ViewBuilder
+    private func buildContentView(for element: ContentElement) -> some View {
+        switch element {
+        case .heading(let text):
+            Text(text)
+                .font(.headline)
+
+        case .paragraph(let text):
+            Text(text)
+                .font(.body)
+                .lineLimit(nil)
+                .textSelection(.enabled)
+
+        // case .emphasis(let text, let style):
+        //     Text(text)
+
+        // case .lineBreak:
+        //     Spacer()
+        //         .frame(height: 8)
+
+        // case .image(let url, let alt):
+        //     buildImage(url: url, alt: alt)
+        }
+    }
+
+    private func loadPage() {
+        let fileUrl = baseDir.appendingPathComponent(filePath)
+        do {
+            let htmlString = try String(contentsOf: fileUrl, encoding: .utf8)
+            let doc = try SwiftSoup.parse(htmlString)
+            let body = try doc.select("body").first() ?? doc
+
+            for element in try body.children() {
+                print("element \(element)")
+            }
+            
+        } catch {
+            print("failed to load page \(error)")
+        }
+    }
+}
+
+
