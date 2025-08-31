@@ -9,7 +9,7 @@ struct ReaderView: View {
     @EnvironmentObject var appState: AppState 
     @State private var dir: URL?
     @State private var htmlFiles: [String] = []
-    @State private var pageIndex = 1 // FIXME: 
+    @State private var pageIndex = 0 // FIXME: 
     @State private var isLoading = true
 
     var body: some View {
@@ -21,6 +21,30 @@ struct ReaderView: View {
                     filePath: htmlFiles[pageIndex],
                     baseDir: dir! // FIXME:
                 )
+                .id(htmlFiles[pageIndex])
+
+                HStack {
+                    Button("Previous") {
+                        if pageIndex > 0 {
+                            pageIndex -= 1
+                        }
+                    }
+                    .disabled(pageIndex == 0)
+
+                    Spacer()
+
+                    Text("Page \(pageIndex + 1)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Spacer()
+
+                    Button("Next") {
+                        pageIndex += 1
+                    }
+                    .disabled(pageIndex == htmlFiles.count - 1)
+                }
+                .padding()
             }
         }
         .onAppear {
@@ -306,18 +330,23 @@ class HTMLContentParser {
 
         do {
             let doc = try SwiftSoup.parse(htmlString)
+            print("children count \(doc.children().count)")
             let body = try doc.select("body").first() ?? doc
+            print("body count \(body.children().count)")
 
             // FIXME: naively considering outerdiv in body as the entry
             // this will likely not work for other epubs. Need some way
             // to just capture elements with text content in order...
-            let entry = try body.children().first() ?? doc
+            // let entry = try body.children().first() ?? doc
+            //
+            //
+            //
+            //
+            // print("entry count \(entry.children().count)")
 
-            for element in try entry.children() {
-                print("element: \(element)")
+            for element in try body.children() {
                 let parsedElement = try parseElement(element)
                 if let parsedElement = parsedElement {
-                    print("parsedElement \(parsedElement)")
                     elements.append(parsedElement)
                 }
             }
@@ -332,9 +361,6 @@ class HTMLContentParser {
     private func parseElement(_ element: Element) throws -> ContentElement? {
         let tagName = try element.tagName().lowercased()
         let text = try element.text()
-
-        print("tagName \(tagName)")
-        print("text \(text)")
 
         switch tagName {
         case "h1": return .heading(text: text)
