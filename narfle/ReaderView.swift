@@ -232,6 +232,8 @@ struct ReaderView: View {
 enum ContentElement {
     case heading(text: String)
     case paragraph(text: String)
+    case emphasis(text: String)
+    case lineBreak
 }
 
 struct PageReaderView: View {
@@ -242,13 +244,17 @@ struct PageReaderView: View {
     @State private var isLoading = true
 
     var body: some View {
-        VStack {
+        ScrollView {
             if isLoading {
                 Text("page loading")
             } else {
-                ForEach(Array(parsedContent.enumerated()), id: \.offset) { index, element in
-                    buildContentView(for: element)
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    ForEach(Array(parsedContent.enumerated()), id: \.offset) { index, element in
+                        buildContentView(for: element)
+                    }
+
                 }
+                .padding()
             }
         }
         .onAppear {
@@ -269,12 +275,12 @@ struct PageReaderView: View {
                 .lineLimit(nil)
                 .textSelection(.enabled)
 
-        // case .emphasis(let text, let style):
-        //     Text(text)
+        case .emphasis(let text):
+            Text(text)
 
-        // case .lineBreak:
-        //     Spacer()
-        //         .frame(height: 8)
+        case .lineBreak:
+            Spacer()
+                .frame(height: 8)
 
         // case .image(let url, let alt):
         //     buildImage(url: url, alt: alt)
@@ -285,17 +291,63 @@ struct PageReaderView: View {
         let fileUrl = baseDir.appendingPathComponent(filePath)
         do {
             let htmlString = try String(contentsOf: fileUrl, encoding: .utf8)
-            let doc = try SwiftSoup.parse(htmlString)
-            let body = try doc.select("body").first() ?? doc
-
-            for element in try body.children() {
-                print("element \(element)")
-            }
-            
+            let parser = HTMLContentParser()
+            self.parsedContent = parser.fromString(htmlString)
+            self.isLoading = false
         } catch {
             print("failed to load page \(error)")
         }
     }
 }
 
+class HTMLContentParser {
+    func fromString(_ htmlString: String) -> [ContentElement] {
+        var elements: [ContentElement] = []
+
+        do {
+            let doc = try SwiftSoup.parse(htmlString)
+            let body = try doc.select("body").first() ?? doc
+
+            // FIXME: naively considering outerdiv in body as the entry
+            // this will likely not work for other epubs. Need some way
+            // to just capture elements with text content in order...
+            let entry = try body.children().first() ?? doc
+
+            for element in try entry.children() {
+                print("element: \(element)")
+                let parsedElement = try parseElement(element)
+                if let parsedElement = parsedElement {
+                    print("parsedElement \(parsedElement)")
+                    elements.append(parsedElement)
+                }
+            }
+            
+        } catch  {
+            print("HTML parsing error: \(error)")
+        }
+
+        return elements
+    }
+
+    private func parseElement(_ element: Element) throws -> ContentElement? {
+        let tagName = try element.tagName().lowercased()
+        let text = try element.text()
+
+        print("tagName \(tagName)")
+        print("text \(text)")
+
+        switch tagName {
+        case "h1": return .heading(text: text)
+        case "h2": return .heading(text: text)
+        case "h3": return .heading(text: text)
+        case "p": return .paragraph(text: text)
+        case "strong", "b": return .emphasis(text: text)
+        case "em", "i": return .emphasis(text: text)
+        case "br": return .lineBreak
+        default:
+            // For unknown tags, just return the text as paragraph
+            return text.isEmpty ? nil : .paragraph(text: text)
+        }
+    }
+}
 
