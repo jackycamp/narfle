@@ -11,13 +11,29 @@ struct ReaderView: View {
     @State private var htmlFiles: [String] = []
     @State private var pageIndex = 0 
     @State private var isLoading = true
-    // @State private var dragOffset: CGFloat = 0
+    @State private var showControls = false
 
     var body: some View {
         VStack {
             if isLoading {
                 Text("Narfle reader (loading)")
             } else {
+                HStack {
+                    Spacer()
+                    Button(action: { appState.selectedFile = nil }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(Circle())
+                    }
+                    // .padding()
+                    .opacity(showControls ? 1.0 : 0.0) // Hide/show without removing space
+                    .animation(.easeInOut(duration: 0.3), value: showControls) 
+                    // .border(.green)
+                }
+                .padding(.trailing, 8)
+                // .border(.red)
                 // TabView to achieve swipe for page turning
                 TabView(selection: $pageIndex) {
                     ForEach(Array(appState.pages.enumerated()), id: \.offset) { index, page in
@@ -56,6 +72,9 @@ struct ReaderView: View {
                 // }
                 // .padding()
             }
+        }
+        .onTapGesture() {
+            showControls = !showControls
         }
         .onAppear {
             loadFile()
@@ -168,6 +187,8 @@ struct ReaderView: View {
     private func estimateHeight(for element: ContentElement, containerWidth: CGFloat) -> CGFloat {
         switch element {
             case .heading: return 40
+            case .heading2: return 36
+            case .heading3: return 34
             case .paragraph(let text):
                 // Rough estimation: ~20 chars per line, 20pt line height
                 let lines = text.count / Int(containerWidth / 10) + 1
@@ -214,7 +235,15 @@ struct PageReaderView: View {
         switch element {
         case .heading(let text):
             Text(text)
+                .font(.title)
+
+        case .heading2(let text):
+            Text(text)
                 .font(.title2)
+        
+        case .heading3(let text):
+            Text(text)
+                .font(.title3)
 
         case .paragraph(let text):
             Text(text)
