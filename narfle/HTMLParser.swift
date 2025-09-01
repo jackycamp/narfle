@@ -70,8 +70,8 @@ struct HTMLParser {
 
         switch tagName {
         case "h1": return .heading(text: text)
-        case "h2": return .heading(text: text)
-        case "h3": return .heading(text: text)
+        case "h2": return .heading2(text: text)
+        case "h3": return .heading3(text: text)
         case "p": return .paragraph(text: text)
         case "br": return .lineBreak
         case "img":
@@ -93,8 +93,8 @@ struct HTMLParser {
 
         switch tagName {
         case "h1": return .heading(text: text)
-        case "h2": return .heading(text: text)
-        case "h3": return .heading(text: text)
+        case "h2": return .heading2(text: text)
+        case "h3": return .heading3(text: text)
         case "p": return .paragraph(text: text)
         case "br": return .lineBreak
         default:
