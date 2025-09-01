@@ -1,4 +1,5 @@
 import SwiftSoup
+import os
 
 struct HTMLParser {
     static func fromString(_ htmlString: String) -> [ContentElement] {
@@ -22,12 +23,28 @@ struct HTMLParser {
                     }
                 } else {
                     // if node has children but still has direct text we parse it
-                    let ownText = try node.ownText().trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !ownText.isEmpty {
-                        if let parsed = try parseElementWithOwnText(node, ownText) {
-                            elements.append(parsed)
+
+                    let tagName = try node.tagName().lowercased()
+
+                    if ["p", "h1", "h2", "h3", "h4", "h5", "h6", "em", "a", "li"].contains(tagName) {
+                        let text = try node.text()
+                        if !text.isEmpty {
+                            if let parsed = try parseElementWithOwnText(node, text) {
+                                elements.append(parsed)
+                            }
+
+                            // if we've processed this element completely
+                            // then we skip adding children to the stack
+                            continue
                         }
                     }
+
+                    // let ownText = try node.ownText().trimmingCharacters(in: .whitespacesAndNewlines)
+                    // if !ownText.isEmpty {
+                    //     if let parsed = try parseElementWithOwnText(node, ownText) {
+                    //         elements.append(parsed)
+                    //     }
+                    // }
 
                     // add this nodes children to the stack 
                     // (reversed so that we maintain the document's order)
@@ -46,6 +63,8 @@ struct HTMLParser {
     }
 
     private static func parseElement(_ element: Element) throws -> ContentElement? {
+        // FIXME: show more obvious message if we get a weird element
+        let logger = Logger.init()
         let tagName = try element.tagName().lowercased()
         let text = try element.text()
 
@@ -61,12 +80,15 @@ struct HTMLParser {
             return .image(src: src, alt: alt.isEmpty ? nil : alt)
 
         default:
+            logger.warning("encountered unknown tag: \(tagName)")
+            logger.warning("corresponding text: \(text)")
             // For unknown tags, just return the text as paragraph
             return text.isEmpty ? nil : .paragraph(text: text)
         }
     }
 
     private static func parseElementWithOwnText(_ element: Element, _ text: String) throws -> ContentElement? {
+        let logger = Logger.init()
         let tagName = try element.tagName().lowercased()
 
         switch tagName {
@@ -76,6 +98,8 @@ struct HTMLParser {
         case "p": return .paragraph(text: text)
         case "br": return .lineBreak
         default:
+            logger.warning("encountered unknown tag: \(tagName)")
+            logger.warning("corresponding text: \(text)")
             // For unknown tags, just return the text as paragraph
             return text.isEmpty ? nil : .paragraph(text: text)
         }
