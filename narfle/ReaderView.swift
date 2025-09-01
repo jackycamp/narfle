@@ -108,6 +108,12 @@ struct ReaderView: View {
                 let chunkedPages = chunkContent(elements, maxHeight: screenDimensions.height - 100, maxWidth: screenDimensions.width)
                 print("captured \(chunkedPages.count) pages for this html file")
 
+                // helpful for debugging
+                // if htmlFile == "ops/xhtml/ch01.html" {
+                //     print("htmlString: \(htmlString)")
+                //     print("elements: \(elements)")
+                // }
+
                 pages.append(contentsOf: chunkedPages)
             } catch {
                 print("error chunking html file \(error)")
