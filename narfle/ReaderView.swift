@@ -11,40 +11,48 @@ struct ReaderView: View {
     @State private var htmlFiles: [String] = []
     @State private var pageIndex = 0 // FIXME: 
     @State private var isLoading = true
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
         VStack {
             if isLoading {
                 Text("Narfle reader (loading)")
             } else {
-                PageReaderView(
-                    filePath: htmlFiles[pageIndex],
-                    baseDir: dir! // FIXME:
-                )
-                .id(htmlFiles[pageIndex])
-
-                HStack {
-                    Button("Previous") {
-                        if pageIndex > 0 {
-                            pageIndex -= 1
-                        }
+                TabView(selection: $pageIndex) {
+                    ForEach(Array(htmlFiles.enumerated()), id: \.offset) { index, file in
+                        PageReaderView(filePath: file, baseDir: dir!)
+                            .tag(index)
                     }
-                    .disabled(pageIndex == 0)
-
-                    Spacer()
-
-                    Text("Page \(pageIndex + 1)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    Button("Next") {
-                        pageIndex += 1
-                    }
-                    .disabled(pageIndex == htmlFiles.count - 1)
                 }
-                .padding()
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                // PageReaderView(
+                //     filePath: htmlFiles[pageIndex],
+                //     baseDir: dir! // FIXME:
+                // )
+                // .id(htmlFiles[pageIndex])
+
+                // HStack {
+                //     Button("Previous") {
+                //         if pageIndex > 0 {
+                //             pageIndex -= 1
+                //         }
+                //     }
+                //     .disabled(pageIndex == 0)
+                //
+                //     Spacer()
+                //
+                //     Text("Page \(pageIndex + 1)")
+                //         .font(.caption)
+                //         .foregroundColor(.secondary)
+                //
+                //     Spacer()
+                //
+                //     Button("Next") {
+                //         pageIndex += 1
+                //     }
+                //     .disabled(pageIndex >= htmlFiles.count - 1)
+                // }
+                // .padding()
             }
         }
         .onAppear {
@@ -312,6 +320,17 @@ struct PageReaderView: View {
     }
 
     private func loadPage() {
+
+        let fullscreen = UIScreen.main.bounds.size
+        print("full screen \(fullscreen)")
+        // FIXME: compute container, add stuff to container
+        // and figure out how to determine pages
+
+        // let layoutManager = NSLayoutManager()
+        // let textContainer = NSTextContainer(size: containerSize)
+        // let textStorage = NSTextStorage(string: text)
+        // textStorage.addLayoutManager(layoutManager)
+
         let fileUrl = baseDir.appendingPathComponent(filePath)
         do {
             let htmlString = try String(contentsOf: fileUrl, encoding: .utf8)
