@@ -8,6 +8,8 @@ import SwiftUI
 
 class AppState: ObservableObject {
     @Published var selectedFile: URL?
+    @Published var pages: [[ContentElement]] = []
+    // @Published var pageIndex = 0
 }
 
 struct AppView: View {
