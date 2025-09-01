@@ -18,6 +18,7 @@ struct ReaderView: View {
             if isLoading {
                 Text("Narfle reader (loading)")
             } else {
+                // TabView to achieve swipe for page turning
                 TabView(selection: $pageIndex) {
                     ForEach(Array(htmlFiles.enumerated()), id: \.offset) { index, file in
                         PageReaderView(filePath: file, baseDir: dir!)
@@ -261,13 +262,6 @@ struct ReaderView: View {
     }
 }
 
-enum ContentElement {
-    case heading(text: String)
-    case paragraph(text: String)
-    case emphasis(text: String)
-    case lineBreak
-}
-
 struct PageReaderView: View {
     let filePath: String
     let baseDir: URL
@@ -299,7 +293,8 @@ struct PageReaderView: View {
         switch element {
         case .heading(let text):
             Text(text)
-                .font(.headline)
+                .font(.title2)
+                // .font(.headline)
 
         case .paragraph(let text):
             Text(text)
@@ -307,15 +302,35 @@ struct PageReaderView: View {
                 .lineLimit(nil)
                 .textSelection(.enabled)
 
-        case .emphasis(let text):
-            Text(text)
+        // case .emphasis(let text):
+        //     Text(text)
 
         case .lineBreak:
             Spacer()
                 .frame(height: 8)
 
+        // FIXME: images aren't appearing
+        case .image(let src, let alt):
+            AsyncImage(url: imageURL(for: src)) { image in
+                image
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+            } placeholder: {
+                Rectangle()
+                .fill(.gray.opacity(0.3))
+                .frame(height: 200)
+            }
+
         // case .image(let url, let alt):
         //     buildImage(url: url, alt: alt)
+        }
+    }
+
+    private func imageURL(for src: String) -> URL? {
+        if src.hasPrefix("http") {
+            return URL(string: src)
+        } else {
+            return baseDir.appendingPathComponent(src)
         }
     }
 
@@ -334,65 +349,12 @@ struct PageReaderView: View {
         let fileUrl = baseDir.appendingPathComponent(filePath)
         do {
             let htmlString = try String(contentsOf: fileUrl, encoding: .utf8)
-            let parser = HTMLContentParser()
-            self.parsedContent = parser.fromString(htmlString)
+            // let parser = HTMLContentParser()
+            // self.parsedContent = parser.fromString(htmlString)
+            self.parsedContent = HTMLParser.fromString(htmlString)
             self.isLoading = false
         } catch {
             print("failed to load page \(error)")
         }
     }
 }
-
-class HTMLContentParser {
-    func fromString(_ htmlString: String) -> [ContentElement] {
-        var elements: [ContentElement] = []
-
-        do {
-            let doc = try SwiftSoup.parse(htmlString)
-            print("children count \(doc.children().count)")
-            let body = try doc.select("body").first() ?? doc
-            print("body count \(body.children().count)")
-
-            // FIXME: naively considering outerdiv in body as the entry
-            // this will likely not work for other epubs. Need some way
-            // to just capture elements with text content in order...
-            // let entry = try body.children().first() ?? doc
-            //
-            //
-            //
-            //
-            // print("entry count \(entry.children().count)")
-
-            for element in try body.children() {
-                let parsedElement = try parseElement(element)
-                if let parsedElement = parsedElement {
-                    elements.append(parsedElement)
-                }
-            }
-            
-        } catch  {
-            print("HTML parsing error: \(error)")
-        }
-
-        return elements
-    }
-
-    private func parseElement(_ element: Element) throws -> ContentElement? {
-        let tagName = try element.tagName().lowercased()
-        let text = try element.text()
-
-        switch tagName {
-        case "h1": return .heading(text: text)
-        case "h2": return .heading(text: text)
-        case "h3": return .heading(text: text)
-        case "p": return .paragraph(text: text)
-        case "strong", "b": return .emphasis(text: text)
-        case "em", "i": return .emphasis(text: text)
-        case "br": return .lineBreak
-        default:
-            // For unknown tags, just return the text as paragraph
-            return text.isEmpty ? nil : .paragraph(text: text)
-        }
-    }
-}
-
