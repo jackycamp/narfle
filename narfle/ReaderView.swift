@@ -19,6 +19,11 @@ struct ReaderView: View {
                 Text("Narfle reader (loading)")
             } else {
                 HStack {
+
+                    Text("Title here")
+                        .font(.body)
+                        .fontWeight(.bold)
+
                     Spacer()
                     Button(action: { appState.selectedFile = nil }) {
                             Image(systemName: "xmark.circle.fill")
@@ -33,6 +38,7 @@ struct ReaderView: View {
                     // .border(.green)
                 }
                 .padding(.trailing, 8)
+                .padding(.leading, 8)
                 // .border(.red)
                 // TabView to achieve swipe for page turning
                 TabView(selection: $pageIndex) {
