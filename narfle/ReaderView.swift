@@ -93,6 +93,9 @@ struct ReaderView: View {
         self.htmlFiles = EPUBArchive.findHTMLFiles(self.dir!)
         print("found html files: \(self.htmlFiles)")
 
+        let title = EPUBArchive.getTitle(self.dir!)
+        print("got title: \(title)")
+
         // TODO: given a epub archive, extract the html content from it
         // then split the html content into chunks
         // the chunk size is determined by the screen size
