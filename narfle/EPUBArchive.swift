@@ -1,6 +1,8 @@
 import Foundation
 import Compression
 import UniformTypeIdentifiers
+import os
+import SwiftSoup
 
 
 func readUInt16(data: Data, at offset: Int) -> UInt16 {
@@ -195,6 +197,32 @@ struct EPUBArchive {
             return aNum < bNum
         }
 
+    }
+
+    static func getTitle(_ url: URL) -> String? {
+        let logger = Logger.init()
+        let fileManager = FileManager.default
+        do {
+            // FIXME: parse location of contentOpf from container.xml?
+            // let metaUrl = url.appendingPathComponent("META-INF")
+            // let containerUrl = metaUrl.appendingPathComponent("container.xml")
+            let contentOpf = url.appendingPathComponent("content.opf")
+            logger.debug("opf path: \(contentOpf)")
+
+            let xmlString = try String(contentsOf: contentOpf, encoding: .utf8)
+            let doc = try SwiftSoup.parse(xmlString)
+            logger.debug("parsed xml: \(doc)")
+
+            let titleElement = try doc.select("dc\\:title").first()
+
+            print("title element: \(titleElement)")
+
+
+            return "Sample Title"
+        } catch {
+           logger.error("Cannot get title from url: \(error)") 
+            return nil
+        }
     }
 
 }
