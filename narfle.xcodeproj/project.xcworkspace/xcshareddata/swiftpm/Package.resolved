@@ -1,5 +1,5 @@
 {
-  "originHash" : "2b6d335272326468abc2114223e2ce9f2cf9645d68fa4e525733ecbf43f90359",
+  "originHash" : "eb56f0cf71b344b229429736b73b536df503922d1df1d1c9a6868abda3197cf3",
   "pins" : [
     {
       "identity" : "lrucache",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "db0428bcfced386943c05ba8ea3e607baa715e45",
         "version" : "2.11.0"
+      }
+    },
+    {
+      "identity" : "swxmlhash",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/drmohundro/SWXMLHash.git",
+      "state" : {
+        "revision" : "9cfb8730651ae7f57a6f5d413e2f07be7d7dbd41",
+        "version" : "8.1.1"
       }
     }
   ],
