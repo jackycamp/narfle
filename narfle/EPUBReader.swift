@@ -57,7 +57,6 @@ struct EPUBPageReader: UIViewRepresentable {
             let archive = Archive(data: data)
             if archive.extractAll(to: tempDir) {
                 if let htmlContent = findSpecificHTMLContent(in: tempDir, filename: filename) {
-                    print("html content: \(htmlContent)")
                     return addBasicStyling(to: htmlContent)
                 }
             }
