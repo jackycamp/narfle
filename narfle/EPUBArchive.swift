@@ -62,22 +62,22 @@ struct EPUBArchive {
                 if localSignature != 0x04034b50 { break }
 
                 let compressionMethod = readUInt16(data: data, at: offset + 8)
-                print("compressionMethod: \(compressionMethod)")
+                // print("compressionMethod: \(compressionMethod)")
                 let compressedSize = Int(readUInt32(data: data, at: offset + 18))
-                print("compressedSize: \(compressedSize)")
+                // print("compressedSize: \(compressedSize)")
                 let uncompressedSize = Int(readUInt32(data: data, at: offset + 22))
-                print("uncompressedSize: \(uncompressedSize)")
+                // print("uncompressedSize: \(uncompressedSize)")
                 let filenameLength = Int(readUInt16(data: data, at: offset + 26))
-                print("filenameLength: \(filenameLength)")
+                // print("filenameLength: \(filenameLength)")
                 let extraFieldLength = Int(readUInt16(data: data, at: offset + 28))
-                print("extraFieldLength: \(extraFieldLength)")
+                // print("extraFieldLength: \(extraFieldLength)")
 
                 let filenameStart = offset + 30
                 let dataStart = filenameStart + filenameLength + extraFieldLength
 
 
                 let filenameData = data.subdata(in: filenameStart..<filenameStart + filenameLength)
-                print("filenameData: \(filenameData)")
+                // print("filenameData: \(filenameData)")
 
                 let filename = String(data: filenameData, encoding: .utf8)
                 print("filename: \(filename)")
@@ -204,18 +204,33 @@ struct EPUBArchive {
         let fileManager = FileManager.default
         do {
             // FIXME: parse location of contentOpf from container.xml?
-            // let metaUrl = url.appendingPathComponent("META-INF")
-            // let containerUrl = metaUrl.appendingPathComponent("container.xml")
+            logger.debug("looking for container.xml")
+            let metaUrl = url.appendingPathComponent("META-INF")
+            let containerUrl = metaUrl.appendingPathComponent("container.xml")
+            logger.debug("container.xml path: \(containerUrl)")
+
+            let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
+            let containerParser = XMLParser.init()
+            try containerParser.parse(containerXmlString)
+
+            // find element with name rootFile
+            // check attributes for "full-path"
+            // which should give us the location of the .opf file
+
+
+            logger.debug("looking for opf")
             let contentOpf = url.appendingPathComponent("content.opf")
             logger.debug("opf path: \(contentOpf)")
 
             let xmlString = try String(contentsOf: contentOpf, encoding: .utf8)
-            let doc = try SwiftSoup.parse(xmlString)
-            logger.debug("parsed xml: \(doc)")
-
-            let titleElement = try doc.select("dc\\:title").first()
-
-            print("title element: \(titleElement)")
+            let parser = XMLParser.init()
+            try parser.parse(xmlString)
+            // let doc = try SwiftSoup.parse(xmlString)
+            // logger.debug("parsed xml: \(doc)")
+            //
+            // let titleElement = try doc.select("dc\\:title").first()
+            //
+            // print("title element: \(titleElement)")
 
 
             return "Sample Title"
