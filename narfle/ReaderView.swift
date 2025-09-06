@@ -24,6 +24,8 @@ struct ReaderView: View {
                     Text(title)
                         .font(.body)
                         .fontWeight(.bold)
+                        .opacity(showControls ? 1.0 : 0.0) // Hide/show without removing space
+                        .animation(.easeInOut(duration: 0.3), value: showControls) 
 
                     Spacer()
                     Button(action: { appState.selectedFile = nil }) {
