@@ -3,6 +3,7 @@ import Compression
 import UniformTypeIdentifiers
 import os
 import SwiftSoup
+import SWXMLHash 
 
 
 func readUInt16(data: Data, at offset: Int) -> UInt16 {
@@ -210,28 +211,37 @@ struct EPUBArchive {
             logger.debug("container.xml path: \(containerUrl)")
 
             let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
-            let containerParser = XMLParser.init()
-            try containerParser.parse(containerXmlString)
-            logger.debug("containerParsing finished")
-            logger.debug("containerParser elements: \(containerParser.numElements())")
 
-            print("containerXml string \(containerXmlString)")
+            let containerXml = XMLHash.parse(containerXmlString)
+            let rootfile = containerXml["container"]["rootfiles"]["rootfile"].element
+            print("root file: \(rootfile)")
+            let fullPath = rootfile!.attribute(by: "full-path")?.text
+            print("fullPath: \(fullPath)")
 
-            let rootFileElement = containerParser.findFirst(name: "rootfile")
-            print("rootFileElement: \(rootFileElement)")
+
+
+            // let containerParser = XMLParser.init()
+            // try containerParser.parse(containerXmlString)
+            // logger.debug("containerParsing finished")
+            // logger.debug("containerParser elements: \(containerParser.numElements())")
+            //
+            // print("containerXml string \(containerXmlString)")
+            //
+            // let rootFileElement = containerParser.findFirst(name: "rootfile")
+            // print("rootFileElement: \(rootFileElement)")
 
             // find element with name rootFile
             // check attributes for "full-path"
             // which should give us the location of the .opf file
 
 
-            logger.debug("looking for opf")
-            let contentOpf = url.appendingPathComponent("content.opf")
-            logger.debug("opf path: \(contentOpf)")
-
-            let xmlString = try String(contentsOf: contentOpf, encoding: .utf8)
-            let parser = XMLParser.init()
-            try parser.parse(xmlString)
+            // logger.debug("looking for opf")
+            // let contentOpf = url.appendingPathComponent("content.opf")
+            // logger.debug("opf path: \(contentOpf)")
+            //
+            // let xmlString = try String(contentsOf: contentOpf, encoding: .utf8)
+            // let parser = XMLParser.init()
+            // try parser.parse(xmlString)
             // let doc = try SwiftSoup.parse(xmlString)
             // logger.debug("parsed xml: \(doc)")
             //
