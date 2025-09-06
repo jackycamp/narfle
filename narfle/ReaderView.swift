@@ -24,6 +24,7 @@ struct ReaderView: View {
 
                     Text(title)
                         .font(.body)
+                        .lineLimit(1)
                         .foregroundColor(.secondary)
                         .fontWeight(.bold)
                         .opacity(showControls ? 1.0 : 0.0)
@@ -236,7 +237,9 @@ struct PageReaderView: View {
                     }
 
                 }
-                .padding()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 0)
+                // .border(.red)
             }
         }
         .onAppear {
@@ -265,6 +268,8 @@ struct PageReaderView: View {
                 .font(.body)
                 .lineLimit(nil)
                 .textSelection(.enabled)
+                .lineSpacing(2)
+                .opacity(0.9)
 
         // case .emphasis(let text):
         //     Text(text)
