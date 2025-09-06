@@ -12,6 +12,7 @@ struct ReaderView: View {
     @State private var pageIndex = 0 
     @State private var isLoading = true
     @State private var showControls = false
+    @State private var title = "Sample Title"
 
     var body: some View {
         VStack {
@@ -20,7 +21,7 @@ struct ReaderView: View {
             } else {
                 HStack {
 
-                    Text("Title here")
+                    Text(title)
                         .font(.body)
                         .fontWeight(.bold)
 
@@ -95,6 +96,7 @@ struct ReaderView: View {
 
         let title = EPUBArchive.getTitle(self.dir!)
         print("got title: \(title)")
+        self.title = title!
 
         // TODO: given a epub archive, extract the html content from it
         // then split the html content into chunks
