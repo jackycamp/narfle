@@ -212,6 +212,13 @@ struct EPUBArchive {
             let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
             let containerParser = XMLParser.init()
             try containerParser.parse(containerXmlString)
+            logger.debug("containerParsing finished")
+            logger.debug("containerParser elements: \(containerParser.numElements())")
+
+            print("containerXml string \(containerXmlString)")
+
+            let rootFileElement = containerParser.findFirst(name: "rootfile")
+            print("rootFileElement: \(rootFileElement)")
 
             // find element with name rootFile
             // check attributes for "full-path"
