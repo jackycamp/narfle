@@ -215,10 +215,22 @@ struct EPUBArchive {
             let containerXml = XMLHash.parse(containerXmlString)
             let rootfile = containerXml["container"]["rootfiles"]["rootfile"].element
             print("root file: \(rootfile)")
-            let fullPath = rootfile!.attribute(by: "full-path")?.text
-            print("fullPath: \(fullPath)")
+            let opfPath = rootfile!.attribute(by: "full-path")?.text
+            print("opfPath: \(opfPath)")
 
+            let opfUrl = url.appendingPathComponent(opfPath!)
+            print("opfUrl \(opfUrl)")
 
+            let opfXmlString = try String(contentsOf: opfUrl, encoding: .utf8)
+            print("opfXml \(opfXmlString)")
+
+            let opfXml = XMLHash.parse(opfXmlString)
+            // let titleElement = opfXml["package"]["metadata"]["dc:title"].element
+            // print("titleElement: \(titleElement)")
+            // Try the standard EPUB location first
+            if let title = opfXml["package"]["metadata"]["dc:title"].element?.text {
+                return title
+            }
 
             // let containerParser = XMLParser.init()
             // try containerParser.parse(containerXmlString)
