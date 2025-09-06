@@ -20,23 +20,25 @@ struct ReaderView: View {
                 Text("Narfle reader (loading)")
             } else {
                 HStack {
+                    Spacer()
 
                     Text(title)
                         .font(.body)
+                        .foregroundColor(.secondary)
                         .fontWeight(.bold)
-                        .opacity(showControls ? 1.0 : 0.0) // Hide/show without removing space
+                        .opacity(showControls ? 1.0 : 0.0)
                         .animation(.easeInOut(duration: 0.3), value: showControls) 
 
                     Spacer()
                     Button(action: { appState.selectedFile = nil }) {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.title3)
-                                .foregroundColor(.white)
+                                .foregroundColor(.secondary)
                                 .background(Color.black.opacity(0.6))
                                 .clipShape(Circle())
                     }
                     // .padding()
-                    .opacity(showControls ? 1.0 : 0.0) // Hide/show without removing space
+                    .opacity(showControls ? 1.0 : 0.0)
                     .animation(.easeInOut(duration: 0.3), value: showControls) 
                     // .border(.green)
                 }
