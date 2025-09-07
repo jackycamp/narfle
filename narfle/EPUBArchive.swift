@@ -5,6 +5,11 @@ import os
 import SwiftSoup
 import SWXMLHash 
 
+enum EPUBParseError: Error {
+    case elementNotFound(String?)
+    case attributeNotFound(String?)
+}
+
 
 func readUInt16(data: Data, at offset: Int) -> UInt16 {
     guard offset + 2 <= data.count else { return 0 }
@@ -200,6 +205,27 @@ struct EPUBArchive {
 
     }
 
+    static func getOpfPath(_ url: URL) throws -> String? {
+        let logger = Logger.init()
+        let metaUrl = url.appendingPathComponent("META-INF")
+        let containerUrl = metaUrl.appendingPathComponent("container.xml")
+        logger.debug("Looking for container.xml at: \(containerUrl)")
+
+        let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
+        let containerXml = XMLHash.parse(containerXmlString)
+        let rootfileElement = containerXml["container"]["rootfiles"]["rootfile"].element
+
+        guard let rootfile = rootfileElement else {
+            throw EPUBParseError.elementNotFound("Could not find rootfile element.")
+        }
+
+        guard let opfPathAttribute = rootfile.attribute(by: "full-path") else {
+            throw EPUBParseError.attributeNotFound("'full-path' attribute does not exist on rootfile element.")
+        }
+
+        return opfPathAttribute.text
+    }
+
     static func getTitle(_ url: URL) -> String? {
         let logger = Logger.init()
         let fileManager = FileManager.default
@@ -269,4 +295,15 @@ struct EPUBArchive {
         }
     }
 
+    static func getMetadata() {
+
+    }
+
+    static func getManifest() {
+
+    }
+
+    static func getSpine() {
+
+    }
 }
