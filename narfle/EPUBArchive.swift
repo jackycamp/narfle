@@ -8,6 +8,13 @@ import SWXMLHash
 enum EPUBParseError: Error {
     case elementNotFound(String?)
     case attributeNotFound(String?)
+    case missingFile(String?)
+}
+
+struct EPUBMetadata {
+    let title: String?
+    let creator: String? 
+    let language: String?
 }
 
 
@@ -228,21 +235,23 @@ struct EPUBArchive {
 
     static func getTitle(_ url: URL) -> String? {
         let logger = Logger.init()
-        let fileManager = FileManager.default
+//        let fileManager = FileManager.default
         do {
             // FIXME: parse location of contentOpf from container.xml?
-            logger.debug("looking for container.xml")
-            let metaUrl = url.appendingPathComponent("META-INF")
-            let containerUrl = metaUrl.appendingPathComponent("container.xml")
-            logger.debug("container.xml path: \(containerUrl)")
+//            logger.debug("looking for container.xml")
+//            let metaUrl = url.appendingPathComponent("META-INF")
+//            let containerUrl = metaUrl.appendingPathComponent("container.xml")
+//            logger.debug("container.xml path: \(containerUrl)")
+//
+//            let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
+//
+//            let containerXml = XMLHash.parse(containerXmlString)
+//            let rootfile = containerXml["container"]["rootfiles"]["rootfile"].element
+//            print("root file: \(rootfile)")
+//            let opfPath = rootfile!.attribute(by: "full-path")?.text
+//            print("opfPath: \(opfPath)")
 
-            let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
-
-            let containerXml = XMLHash.parse(containerXmlString)
-            let rootfile = containerXml["container"]["rootfiles"]["rootfile"].element
-            print("root file: \(rootfile)")
-            let opfPath = rootfile!.attribute(by: "full-path")?.text
-            print("opfPath: \(opfPath)")
+            let opfPath = try EPUBArchive.getOpfPath(url)
 
             let opfUrl = url.appendingPathComponent(opfPath!)
             print("opfUrl \(opfUrl)")
@@ -295,8 +304,36 @@ struct EPUBArchive {
         }
     }
 
-    static func getMetadata() {
+    static func getMetadata(_ url: URL) throws -> EPUBMetadata {
+        guard let opfPath = try EPUBArchive.getOpfPath(url) else {
+            throw EPUBParseError.missingFile("Cannot determine opfPath")
+        }
+        let opfUrl = url.appendingPathComponent(opfPath)
 
+        let opfXmlString = try String(contentsOf: opfUrl, encoding: .utf8)
+        let opfXml = XMLHash.parse(opfXmlString)
+
+        var title: String?
+        var creator: String?
+        var language: String?
+
+        if let titleElement = opfXml["package"]["metadata"]["dc:title"].element {
+           title = titleElement.text 
+        }
+
+        if let creatorElement = opfXml["package"]["metadata"]["dc:creator"].element {
+            creator = creatorElement.text
+        }
+
+        if let langElement = opfXml["package"]["metadata"]["dc:language"].element {
+            language = langElement.text
+        }
+
+        return EPUBMetadata(
+            title: title,
+            creator: creator,
+            language: language
+        )
     }
 
     static func getManifest() {
