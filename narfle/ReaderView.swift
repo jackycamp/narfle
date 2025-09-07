@@ -103,6 +103,15 @@ struct ReaderView: View {
         print("got title: \(title)")
         self.title = title!
 
+        do {
+            let metadata = try EPUBArchive.getMetadata(self.dir!)
+            print("got metadata: \(metadata)")
+        } catch {
+            print("error getting metadata \(error)")
+            
+        }
+
+
         // TODO: given a epub archive, extract the html content from it
         // then split the html content into chunks
         // the chunk size is determined by the screen size
