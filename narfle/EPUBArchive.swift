@@ -18,6 +18,11 @@ struct EPUBMetadata {
     let language: String?
 }
 
+struct EPUBSpineItem {
+    let id: String
+    let htmlUrl: String?
+}
+
 
 func readUInt16(data: Data, at offset: Int) -> UInt16 {
     guard offset + 2 <= data.count else { return 0 }
@@ -353,7 +358,7 @@ struct EPUBArchive {
         return opfXml
     }
 
-    static func getSpine(_ url: URL) throws -> [String: String] {
+    static func getSpine(_ url: URL) throws -> [String: EPUBSpineItem] {
         guard let opfXml = try EPUBArchive.getOpfXML(url) else {
             throw EPUBParseError.invalidOpf("Cannot parse xml in opf file")
         }
@@ -368,7 +373,9 @@ struct EPUBArchive {
             manifest[id] = href
         }
 
-        let spine: [String: String] = [:]
+        // let spine: [String: String] = [:]
+
+        var spine: [String: EPUBSpineItem] = [:]
 
         for elem in opfXml["spine"]["itemref"].all {
             // Capture idref for spine item.
@@ -377,6 +384,13 @@ struct EPUBArchive {
             // Use idref to find corresponding item in manifest.
             // From here, we are interested in the href attribute of the manifest item.
             let href = manifest[id] 
+
+            let spineItem = EPUBSpineItem(
+                id: id,
+                htmlUrl: href
+            )
+
+            spine[id] = spineItem
         }
 
         print("got spine: \(spine)")
