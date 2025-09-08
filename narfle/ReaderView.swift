@@ -135,7 +135,6 @@ struct ReaderView: View {
             }
         } catch {
             print("error processing spine \(error)")
-            
         }
 
 
