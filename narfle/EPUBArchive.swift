@@ -9,6 +9,7 @@ enum EPUBParseError: Error {
     case elementNotFound(String?)
     case attributeNotFound(String?)
     case missingFile(String?)
+    case invalidOpf(String?)
 }
 
 struct EPUBMetadata {
@@ -306,7 +307,7 @@ struct EPUBArchive {
 
     static func getMetadata(_ url: URL) throws -> EPUBMetadata {
         guard let opfPath = try EPUBArchive.getOpfPath(url) else {
-            throw EPUBParseError.missingFile("Cannot determine opfPath")
+            throw EPUBParseError.missingFile("Cannot find opf file")
         }
         let opfUrl = url.appendingPathComponent(opfPath)
 
@@ -336,11 +337,49 @@ struct EPUBArchive {
         )
     }
 
-    static func getManifest() {
+    static func getManifest(_ url: URL) {
 
     }
 
-    static func getSpine() {
+    static func getOpfXML(_ url: URL) throws -> XMLIndexer? {
+        guard let opfPath = try EPUBArchive.getOpfPath(url) else {
+            throw EPUBParseError.missingFile("Cannot find opf file")
+        }
 
+        let opfUrl = url.appendingPathComponent(opfPath)
+        let opfXmlString = try String(contentsOf: opfUrl, encoding: .utf8)
+        let opfXml = XMLHash.parse(opfXmlString)
+
+        return opfXml
+    }
+
+    static func getSpine(_ url: URL) throws -> [String: String] {
+        guard let opfXml = try EPUBArchive.getOpfXML(url) else {
+            throw EPUBParseError.invalidOpf("Cannot parse xml in opf file")
+        }
+
+        var manifest: [String: String] = [:]
+
+        // First capture the entire manfiest. Building out a dictionary where:
+        // {"id": "path to html file"}
+        for item in opfXml["manifest"]["item"].all {
+            let id = item.element!.attribute(by: "id")!.text
+            let href = item.element!.attribute(by: "href")!.text
+            manifest[id] = href
+        }
+
+        let spine: [String: String] = [:]
+
+        for elem in opfXml["spine"]["itemref"].all {
+            // Capture idref for spine item.
+            let id = elem.element!.attribute(by: "idref")!.text
+
+            // Use idref to find corresponding item in manifest.
+            // From here, we are interested in the href attribute of the manifest item.
+            let href = manifest[id] 
+        }
+
+        print("got spine: \(spine)")
+        return spine
     }
 }
