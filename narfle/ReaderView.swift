@@ -111,6 +111,33 @@ struct ReaderView: View {
             
         }
 
+        let screenDimensions = UIScreen.main.bounds.size
+        print("screen dimensions \(screenDimensions)")
+
+        var pages: [[ContentElement]] = []
+
+        do {
+            let spine = try EPUBArchive.getSpine(self.dir!)
+            print("got spine: \(spine)")
+
+            for item in spine.values {
+                let htmlUrl = self.dir!.appendingPathComponent(item.htmlUrl!)
+                print("chunking html file at url: \(htmlUrl)")
+
+                let htmlString = try String(contentsOf: htmlUrl, encoding: .utf8)
+                let elements = HTMLParser.fromString(htmlString)
+                print("captured \(elements.count) elements from \(htmlUrl)")
+
+                let chunkedPages = chunkContent(elements, maxHeight: screenDimensions.height - 200, maxWidth: screenDimensions.width - 100)
+                print("captured \(chunkedPages.count) pages for this html file")
+                
+                pages.append(contentsOf: chunkedPages)
+            }
+        } catch {
+            print("error processing spine \(error)")
+            
+        }
+
 
         // TODO: given a epub archive, extract the html content from it
         // then split the html content into chunks
@@ -128,42 +155,42 @@ struct ReaderView: View {
         //  id: page2, elements: []
         // ]
 
-        let screenDimensions = UIScreen.main.bounds.size
-        print("screen dimensions \(screenDimensions)")
-
-        var pages: [[ContentElement]] = []
-
-        // layoutManager with text container won't work when we have image elements..
-        // let layoutManager = NSLayoutManager()
-        // let textContainer = NSTextContainer(size: screenDimensions)
-        // let textStorage = NSTextStorage()
-        // textStorage.addLayoutManager(layoutManager)
-
-        for htmlFile in self.htmlFiles {
-            do {
-                print("chunking html file \(htmlFile)")
-
-                let fullUrl = self.dir!.appendingPathComponent(htmlFile)
-                let htmlString = try String(contentsOf: fullUrl, encoding: .utf8)
-
-                let elements = HTMLParser.fromString(htmlString)
-                print("captured \(elements.count) elements from html")
-
-                let chunkedPages = chunkContent(elements, maxHeight: screenDimensions.height - 100, maxWidth: screenDimensions.width)
-                print("captured \(chunkedPages.count) pages for this html file")
-
-                // helpful for debugging
-                // if htmlFile == "ops/xhtml/ch01.html" {
-                //     print("htmlString: \(htmlString)")
-                //     print("elements: \(elements)")
-                // }
-
-                pages.append(contentsOf: chunkedPages)
-            } catch {
-                print("error chunking html file \(error)")
-                
-            }
-        }
+        // let screenDimensions = UIScreen.main.bounds.size
+        // print("screen dimensions \(screenDimensions)")
+        //
+        // var pages: [[ContentElement]] = []
+        //
+        // // layoutManager with text container won't work when we have image elements..
+        // // let layoutManager = NSLayoutManager()
+        // // let textContainer = NSTextContainer(size: screenDimensions)
+        // // let textStorage = NSTextStorage()
+        // // textStorage.addLayoutManager(layoutManager)
+        //
+        // for htmlFile in self.htmlFiles {
+        //     do {
+        //         print("chunking html file \(htmlFile)")
+        //
+        //         let fullUrl = self.dir!.appendingPathComponent(htmlFile)
+        //         let htmlString = try String(contentsOf: fullUrl, encoding: .utf8)
+        //
+        //         let elements = HTMLParser.fromString(htmlString)
+        //         print("captured \(elements.count) elements from html")
+        //
+        //         let chunkedPages = chunkContent(elements, maxHeight: screenDimensions.height - 100, maxWidth: screenDimensions.width)
+        //         print("captured \(chunkedPages.count) pages for this html file")
+        //
+        //         // helpful for debugging
+        //         // if htmlFile == "ops/xhtml/ch01.html" {
+        //         //     print("htmlString: \(htmlString)")
+        //         //     print("elements: \(elements)")
+        //         // }
+        //
+        //         pages.append(contentsOf: chunkedPages)
+        //     } catch {
+        //         print("error chunking html file \(error)")
+        //
+        //     }
+        // }
 
         print("number of pages built: \(pages.count)")
         // FIXME: shoving it in global state for now
