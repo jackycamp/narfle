@@ -373,8 +373,6 @@ struct EPUBArchive {
             manifest[id] = href
         }
 
-        // let spine: [String: String] = [:]
-
         var spine: [String: EPUBSpineItem] = [:]
 
         for elem in opfXml["spine"]["itemref"].all {
@@ -392,8 +390,6 @@ struct EPUBArchive {
 
             spine[id] = spineItem
         }
-
-        print("got spine: \(spine)")
         return spine
     }
 }
