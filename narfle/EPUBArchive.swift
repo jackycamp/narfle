@@ -53,6 +53,8 @@ struct EPUBArchive {
         //
         let fileManager = FileManager.default
         let tempDir = fileManager.temporaryDirectory.appendingPathComponent("epub_structure_\(UUID().uuidString)")
+        
+//        let appSupportDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
 
         guard url.startAccessingSecurityScopedResource() else { return tempDir }
         defer { url.stopAccessingSecurityScopedResource() }
@@ -225,6 +227,7 @@ struct EPUBArchive {
         logger.debug("Looking for container.xml at: \(containerUrl)")
 
         let containerXmlString = try String(contentsOf: containerUrl, encoding: .utf8)
+        print("containerXmlString \(containerXmlString)")
         let containerXml = XMLHash.parse(containerXmlString)
         let rootfileElement = containerXml["container"]["rootfiles"]["rootfile"].element
 
@@ -352,6 +355,9 @@ struct EPUBArchive {
         }
 
         let opfUrl = url.appendingPathComponent(opfPath)
+        print("opfUrl \(opfUrl)")
+        let opfParent = opfUrl.deletingLastPathComponent()
+        print("opf parent: \(opfParent)")
         let opfXmlString = try String(contentsOf: opfUrl, encoding: .utf8)
         let opfXml = XMLHash.parse(opfXmlString)
 
@@ -367,15 +373,18 @@ struct EPUBArchive {
 
         // First capture the entire manfiest. Building out a dictionary where:
         // {"id": "path to html file"}
-        for item in opfXml["manifest"]["item"].all {
+        for item in opfXml["package"]["manifest"]["item"].all {
+            print("manifest item: \(item)")
             let id = item.element!.attribute(by: "id")!.text
             let href = item.element!.attribute(by: "href")!.text
             manifest[id] = href
         }
 
+        print("got manfiest: \(manifest)")
+
         var spine: [String: EPUBSpineItem] = [:]
 
-        for elem in opfXml["spine"]["itemref"].all {
+        for elem in opfXml["package"]["spine"]["itemref"].all {
             // Capture idref for spine item.
             let id = elem.element!.attribute(by: "idref")!.text
 
