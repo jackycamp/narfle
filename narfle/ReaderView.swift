@@ -120,7 +120,7 @@ struct ReaderView: View {
             let spine = try EPUBArchive.getSpine(self.dir!)
             print("got spine: \(spine)")
 
-            for item in spine.values {
+            for item in spine {
                 // let htmlUrl = self.dir!.appendingPathComponent(item.htmlUrl!)
                 let htmlUrl = item.htmlUrl!
                 print("chunking html file at url: \(htmlUrl)")
