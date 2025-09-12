@@ -20,7 +20,8 @@ struct EPUBMetadata {
 
 struct EPUBSpineItem {
     let id: String
-    let htmlUrl: String?
+    // let htmlUrl: String?
+    let htmlUrl: URL?
 }
 
 
@@ -242,6 +243,15 @@ struct EPUBArchive {
         return opfPathAttribute.text
     }
 
+    static func getOpfUrl(_ url: URL) throws -> URL? {
+        guard let opfPath = try EPUBArchive.getOpfPath(url) else {
+            throw EPUBParseError.missingFile("Cannot find opf file path")
+        }
+
+        let opfUrl = url.appendingPathComponent(opfPath)
+        return opfUrl
+    }
+
     static func getTitle(_ url: URL) -> String? {
         let logger = Logger.init()
 //        let fileManager = FileManager.default
@@ -355,9 +365,6 @@ struct EPUBArchive {
         }
 
         let opfUrl = url.appendingPathComponent(opfPath)
-        print("opfUrl \(opfUrl)")
-        let opfParent = opfUrl.deletingLastPathComponent()
-        print("opf parent: \(opfParent)")
         let opfXmlString = try String(contentsOf: opfUrl, encoding: .utf8)
         let opfXml = XMLHash.parse(opfXmlString)
 
@@ -365,11 +372,20 @@ struct EPUBArchive {
     }
 
     static func getSpine(_ url: URL) throws -> [String: EPUBSpineItem] {
+
+        guard let opfUrl = try EPUBArchive.getOpfUrl(url) else {
+            throw EPUBParseError.invalidOpf("Cannot determine opf url")
+        }
+        print("opf url: \(opfUrl)")
+
         guard let opfXml = try EPUBArchive.getOpfXML(url) else {
             throw EPUBParseError.invalidOpf("Cannot parse xml in opf file")
         }
 
-        var manifest: [String: String] = [:]
+        let opfParentUrl = opfUrl.deletingLastPathComponent()
+        print("opf parent url: \(opfParentUrl)")
+
+        var manifest: [String: URL] = [:]
 
         // First capture the entire manfiest. Building out a dictionary where:
         // {"id": "path to html file"}
@@ -377,7 +393,9 @@ struct EPUBArchive {
             print("manifest item: \(item)")
             let id = item.element!.attribute(by: "id")!.text
             let href = item.element!.attribute(by: "href")!.text
-            manifest[id] = href
+            let htmlUrl = opfParentUrl.appendingPathComponent(href)
+            // manifest[id] = href
+            manifest[id] = htmlUrl
         }
 
         print("got manfiest: \(manifest)")
@@ -390,11 +408,12 @@ struct EPUBArchive {
 
             // Use idref to find corresponding item in manifest.
             // From here, we are interested in the href attribute of the manifest item.
-            let href = manifest[id] 
+            // let href = manifest[id] 
+            let htmlUrl = manifest[id]
 
             let spineItem = EPUBSpineItem(
                 id: id,
-                htmlUrl: href
+                htmlUrl: htmlUrl
             )
 
             spine[id] = spineItem
