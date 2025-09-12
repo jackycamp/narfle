@@ -371,7 +371,7 @@ struct EPUBArchive {
         return opfXml
     }
 
-    static func getSpine(_ url: URL) throws -> [String: EPUBSpineItem] {
+    static func getSpine(_ url: URL) throws -> [EPUBSpineItem] {
 
         guard let opfUrl = try EPUBArchive.getOpfUrl(url) else {
             throw EPUBParseError.invalidOpf("Cannot determine opf url")
@@ -398,9 +398,10 @@ struct EPUBArchive {
             manifest[id] = htmlUrl
         }
 
-        print("got manfiest: \(manifest)")
+        print("got manifest: \(manifest)")
 
-        var spine: [String: EPUBSpineItem] = [:]
+        // var spine: [String: EPUBSpineItem] = [:]
+        var spine: [EPUBSpineItem] = []
 
         for elem in opfXml["package"]["spine"]["itemref"].all {
             // Capture idref for spine item.
@@ -416,7 +417,8 @@ struct EPUBArchive {
                 htmlUrl: htmlUrl
             )
 
-            spine[id] = spineItem
+            // spine[id] = spineItem
+            spine.append(spineItem)
         }
         return spine
     }
