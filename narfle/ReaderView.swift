@@ -126,6 +126,10 @@ struct ReaderView: View {
                 print("chunking html file at url: \(htmlUrl)")
 
                 let htmlString = try String(contentsOf: htmlUrl, encoding: .utf8)
+                if htmlUrl.absoluteString.hasSuffix("Chapter001.html") {
+                    print("chapter 1 html")
+                    print(htmlString)
+                }
                 let elements = HTMLParser.fromString(htmlString)
                 print("captured \(elements.count) elements from \(htmlUrl)")
 
@@ -244,9 +248,9 @@ struct ReaderView: View {
             case .paragraph(let text):
                 // Rough estimation: ~20 chars per line, 20pt line height
                 let lines = text.count / Int(containerWidth / 10) + 1
-                return CGFloat(lines) * 20
+                return CGFloat(lines) * 8
             case .image: return 200 // or parse actual dimensions if available
-            case .lineBreak: return 8
+            case .lineBreak: return 2
         }
     }
 
@@ -301,10 +305,11 @@ struct PageReaderView: View {
 
         case .paragraph(let text):
             Text(text)
-                .font(.body)
+                // .font(.body)
+                .font(.system(size: 14))
                 .lineLimit(nil)
-                .textSelection(.enabled)
-                .lineSpacing(2)
+                // .textSelection(.enabled)
+                .lineSpacing(1)
                 .opacity(0.9)
 
         // case .emphasis(let text):
@@ -312,7 +317,7 @@ struct PageReaderView: View {
 
         case .lineBreak:
             Spacer()
-                .frame(height: 8)
+                .frame(height: 2)
 
         // FIXME: images aren't appearing
         case .image(let src, let alt):
