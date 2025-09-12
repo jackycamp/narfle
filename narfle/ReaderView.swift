@@ -121,7 +121,8 @@ struct ReaderView: View {
             print("got spine: \(spine)")
 
             for item in spine.values {
-                let htmlUrl = self.dir!.appendingPathComponent(item.htmlUrl!)
+                // let htmlUrl = self.dir!.appendingPathComponent(item.htmlUrl!)
+                let htmlUrl = item.htmlUrl!
                 print("chunking html file at url: \(htmlUrl)")
 
                 let htmlString = try String(contentsOf: htmlUrl, encoding: .utf8)
