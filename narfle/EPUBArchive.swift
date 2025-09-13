@@ -12,6 +12,10 @@ enum EPUBParseError: Error {
     case invalidOpf(String?)
 }
 
+enum EPUBError: Error {
+    case extractError(String?)
+}
+
 struct EPUBMetadata {
     let title: String?
     let creator: String? 
@@ -40,6 +44,51 @@ func readUInt32(data: Data, at offset: Int) -> UInt32 {
 }
 
 struct EPUBArchive {
+    static func extract(from sourceUrl: URL, to destinationUrl: URL) throws {
+        guard sourceUrl.startAccessingSecurityScopedResource() else {
+            throw EPUBError.extractError("Cannot access scoped resource for sourceUrl: \(sourceUrl)")
+        }
+        defer { sourceUrl.stopAccessingSecurityScopedResource() }
+
+        let data = try Data(contentsOf: sourceUrl)
+        let signature = readUInt32(data: data, at: 0)
+
+        if signature != 0x04034b50 {
+            throw EPUBError.extractError("Signature mismatch. Expected: \(0x04034b50) found: \(signature)")
+        }
+
+        var offset = 0
+        while offset < data.count - 30 {
+            let localSignature = readUInt32(data: data, at: offset)
+
+            // FIXME: should warn here
+            if localSignature != 0x04034b50 { break }
+
+            let compressionMethod = readUInt16(data: data, at: offset + 8)
+            let compressedSize = Int(readUInt32(data: data, at: offset + 18))
+            let uncompressedSize = Int(readUInt32(data: data, at: offset + 22))
+            let filenameLength = Int(readUInt16(data: data, at: offset + 26))
+            let extraFieldLength = Int(readUInt16(data: data, at: offset + 28))
+
+            let filenameStart = offset + 30
+            let dataStart = filenameStart + filenameLength + extraFieldLength
+            let filenameData = data.subdata(in: filenameStart..<filenameStart + filenameLength)
+            let filename = String(data: filenameData, encoding: .utf8)
+
+            // FIXME: should warn here
+            guard let filename = String(data: filenameData, encoding: .utf8),
+                !filename.isEmpty else {
+                    offset = dataStart + compressedSize
+                    continue
+                }
+
+        }
+
+
+
+    }
+
+
     static func extract(_ url: URL) -> URL {
         // FIXME: this implementation is severely naive, there are a few security holes here
         // one of the most critical is directory traversal and hidden files
@@ -55,7 +104,7 @@ struct EPUBArchive {
         let fileManager = FileManager.default
         let tempDir = fileManager.temporaryDirectory.appendingPathComponent("epub_structure_\(UUID().uuidString)")
         
-//        let appSupportDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        // let appSupportDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
 
         guard url.startAccessingSecurityScopedResource() else { return tempDir }
         defer { url.stopAccessingSecurityScopedResource() }
