@@ -94,6 +94,40 @@ struct ReaderView: View {
     }
 
     private func loadFile() {
+        // TODO: when loading from a user picked file:
+        // - Generate ID of document (will be used later when creating record)
+        // - Perhaps we create the record here with status "pending"
+        // - Retrieve application support directory
+        // - Generate new directory in app support directory with the given id
+        // - Extract document at selectedFile to this new directory
+        // - Retrieve metadata from document at the extracted location
+        // - Update record with metadata information
+        // - Generate first few pages of content with buffer
+        // - Set status of record to ready
+        // - Render first page
+
+
+        // NOTE: Other things to note:
+        // - Perhaps the model that represents a "File" or "Book" or whatever
+        //   should be called NarfDoc or NarFile. Perhaps bundle makes sense here.
+        //   Consider: NarfBundle, NarfBdl, NarBdl, NarBundle. Leaning towards NarfBundle.
+
+        let bundleId = UUID()
+        let fileManager = FileManager.default
+
+        // FIXME: check the robustness of this
+        let appDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+
+        let bundleDir = appDir.appendingPathComponent(bundleId.uuidString)
+
+        do {
+            try fileManager.createDirectory(at: bundleDir, withIntermediateDirectories: true)
+            try EPUBArchive.extract(from: appState.selectedFile!, to: bundleDir)
+        } catch {
+            print("error: \(error)")
+
+        }
+
         self.dir = EPUBArchive.extract(appState.selectedFile!)
         print("extracted file to \(self.dir)")
         self.htmlFiles = EPUBArchive.findHTMLFiles(self.dir!)
@@ -141,60 +175,6 @@ struct ReaderView: View {
         } catch {
             print("error processing spine \(error)")
         }
-
-
-        // TODO: given a epub archive, extract the html content from it
-        // then split the html content into chunks
-        // the chunk size is determined by the screen size
-        // each chunk will be a container of content
-        // we go through the html content and iteratively fill the containers
-        // each container is then a "single page" 
-        //
-        // for now, all of this will be kept in memory
-        //
-        // could eventually have a data structure like:
-        // content = [
-        //  id: cover, elements: [],
-        //  id: page1, elements: [],
-        //  id: page2, elements: []
-        // ]
-
-        // let screenDimensions = UIScreen.main.bounds.size
-        // print("screen dimensions \(screenDimensions)")
-        //
-        // var pages: [[ContentElement]] = []
-        //
-        // // layoutManager with text container won't work when we have image elements..
-        // // let layoutManager = NSLayoutManager()
-        // // let textContainer = NSTextContainer(size: screenDimensions)
-        // // let textStorage = NSTextStorage()
-        // // textStorage.addLayoutManager(layoutManager)
-        //
-        // for htmlFile in self.htmlFiles {
-        //     do {
-        //         print("chunking html file \(htmlFile)")
-        //
-        //         let fullUrl = self.dir!.appendingPathComponent(htmlFile)
-        //         let htmlString = try String(contentsOf: fullUrl, encoding: .utf8)
-        //
-        //         let elements = HTMLParser.fromString(htmlString)
-        //         print("captured \(elements.count) elements from html")
-        //
-        //         let chunkedPages = chunkContent(elements, maxHeight: screenDimensions.height - 100, maxWidth: screenDimensions.width)
-        //         print("captured \(chunkedPages.count) pages for this html file")
-        //
-        //         // helpful for debugging
-        //         // if htmlFile == "ops/xhtml/ch01.html" {
-        //         //     print("htmlString: \(htmlString)")
-        //         //     print("elements: \(elements)")
-        //         // }
-        //
-        //         pages.append(contentsOf: chunkedPages)
-        //     } catch {
-        //         print("error chunking html file \(error)")
-        //
-        //     }
-        // }
 
         print("number of pages built: \(pages.count)")
         // FIXME: shoving it in global state for now
