@@ -45,6 +45,7 @@ func readUInt32(data: Data, at offset: Int) -> UInt32 {
 
 struct EPUBArchive {
     static func extract(from sourceUrl: URL, to destinationUrl: URL) throws {
+        let logger = Logger.init()
         guard sourceUrl.startAccessingSecurityScopedResource() else {
             throw EPUBError.extractError("Cannot access scoped resource for sourceUrl: \(sourceUrl)")
         }
@@ -75,17 +76,60 @@ struct EPUBArchive {
             let filenameData = data.subdata(in: filenameStart..<filenameStart + filenameLength)
             let filename = String(data: filenameData, encoding: .utf8)
 
-            // FIXME: should warn here
+            // FIXME: should warn here or throw?
             guard let filename = String(data: filenameData, encoding: .utf8),
                 !filename.isEmpty else {
                     offset = dataStart + compressedSize
                     continue
                 }
 
+            let fileUrl = destinationUrl.appendingPathComponent(filename)
+            let isDirectory = filename.hasSuffix("/")
+
+            if isDirectory {
+                try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: true)
+            }
+
+            if !isDirectory {
+                let parentDir = fileUrl.deletingLastPathComponent()
+                try FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true)
+
+                let compressedData = data.subdata(in: dataStart..<dataStart + compressedSize)
+                let decompressedData: Data
+
+                switch compressionMethod {
+                    case 0:
+                        decompressedData = compressedData
+
+                    case 8:
+                        decompressedData = try compressedData.withUnsafeBytes { bytes in
+                            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: uncompressedSize)
+                            defer {buffer.deallocate()}
+
+                            // Using Apple's decompression lib to decompress
+                            let decompressedSize = compression_decode_buffer(
+                                buffer, uncompressedSize,
+                                bytes.bindMemory(to: UInt8.self).baseAddress!, compressedData.count,
+                                nil, COMPRESSION_ZLIB
+                            )
+
+                            guard decompressedSize > 0 else {
+                                throw EPUBError.extractError("Decmopression failed, decompressedSize is not greater than 0.")
+                            }
+
+                            return Data(bytes: buffer, count: decompressedSize)
+                        }
+
+                    default:
+                        logger.warning("Unsupported compression method: \(compressionMethod), extracted contents may appear strange.")
+                        decompressedData = compressedData
+                }
+
+                try decompressedData.write(to: fileUrl)
+            }
+
+            offset = dataStart + compressedSize
         }
-
-
-
     }
 
 
