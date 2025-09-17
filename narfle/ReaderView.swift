@@ -8,7 +8,7 @@ import SwiftSoup
 struct ReaderView: View {
     @EnvironmentObject var appState: AppState 
     @State private var dir: URL?
-    @State private var htmlFiles: [String] = []
+    // @State private var htmlFiles: [String] = []
     @State private var pageIndex = 0 
     @State private var isLoading = true
     @State private var showControls = false
@@ -111,35 +111,43 @@ struct ReaderView: View {
         // - Perhaps the model that represents a "File" or "Book" or whatever
         //   should be called NarfDoc or NarFile. Perhaps bundle makes sense here.
         //   Consider: NarfBundle, NarfBdl, NarBdl, NarBundle. Leaning towards NarfBundle.
+        // - Then a service could be BundleManager or BundleProcessor
 
         let bundleId = UUID()
         let fileManager = FileManager.default
 
         // FIXME: check the robustness of this
         let appDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        print("Using application support directory: \(appDir)")
 
         let bundleDir = appDir.appendingPathComponent(bundleId.uuidString)
 
         do {
+            print("Creating bundle directory: \(bundleDir)")
             try fileManager.createDirectory(at: bundleDir, withIntermediateDirectories: true)
+            print("Extracting to bundle directory: \(appState.selectedFile) -> \(bundleDir)")
             try EPUBArchive.extract(from: appState.selectedFile!, to: bundleDir)
         } catch {
             print("error: \(error)")
 
         }
 
-        self.dir = EPUBArchive.extract(appState.selectedFile!)
-        print("extracted file to \(self.dir)")
-        self.htmlFiles = EPUBArchive.findHTMLFiles(self.dir!)
-        print("found html files: \(self.htmlFiles)")
+        // self.dir = EPUBArchive.extract(appState.selectedFile!)
+        // print("extracted file to \(self.dir)")
+        // self.htmlFiles = EPUBArchive.findHTMLFiles(self.dir!)
+        // print("found html files: \(self.htmlFiles)")
 
-        let title = EPUBArchive.getTitle(self.dir!)
-        print("got title: \(title)")
-        self.title = title!
+        self.dir = bundleDir
+        print("Extracted file to bundle directory: \(self.dir)")
+//        let title = EPUBArchive.getTitle(self.dir!)
+//        print("got title: \(title)")
+//        self.title = title!
 
         do {
             let metadata = try EPUBArchive.getMetadata(self.dir!)
             print("got metadata: \(metadata)")
+            self.title = metadata.title!
+            print("setting title: \(self.title)")
         } catch {
             print("error getting metadata \(error)")
             
