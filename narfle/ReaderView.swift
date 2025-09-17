@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import WebKit
 import Foundation
 import Compression
@@ -7,6 +8,7 @@ import SwiftSoup
 
 struct ReaderView: View {
     @EnvironmentObject var appState: AppState 
+    @Environment(\.modelContext) private var modelContext
     @State private var dir: URL?
     // @State private var htmlFiles: [String] = []
     @State private var pageIndex = 0 
@@ -113,14 +115,14 @@ struct ReaderView: View {
         //   Consider: NarfBundle, NarfBdl, NarBdl, NarBundle. Leaning towards NarfBundle.
         // - Then a service could be BundleManager or BundleProcessor
 
-        let bundleId = UUID()
+        let bundle = NarfBundle.init()
         let fileManager = FileManager.default
 
         // FIXME: check the robustness of this
         let appDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         print("Using application support directory: \(appDir)")
 
-        let bundleDir = appDir.appendingPathComponent(bundleId.uuidString)
+        let bundleDir = appDir.appendingPathComponent(bundle.id.uuidString)
 
         do {
             print("Creating bundle directory: \(bundleDir)")
@@ -147,6 +149,7 @@ struct ReaderView: View {
             let metadata = try EPUBArchive.getMetadata(self.dir!)
             print("got metadata: \(metadata)")
             self.title = metadata.title!
+            bundle.title = metadata.title!
             print("setting title: \(self.title)")
         } catch {
             print("error getting metadata \(error)")
@@ -193,6 +196,7 @@ struct ReaderView: View {
         // let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         // defer { try? fileManager.removeItem(at: tempDir) }
         self.isLoading = false
+        modelContext.insert(bundle)
 
         return
     }
