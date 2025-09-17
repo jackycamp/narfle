@@ -21,9 +21,14 @@ struct LibraryView: View {
                     Text(title)
                         .font(.headline)
                 }
+                
+                if let author = bundle.author {
+                    Text(author)
+                        .font(.caption)
+                }
 
                 Text(bundle.id.uuidString)
-                    .font(.body)
+                    .font(.caption2)
             }
 
             Button(action: { showFilePicker = true }) {
