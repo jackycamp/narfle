@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct narfleApp: App {
@@ -13,5 +14,6 @@ struct narfleApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [NarfBundle.self])
     }
 }
