@@ -150,6 +150,7 @@ struct ReaderView: View {
             self.title = metadata.title!
             bundle.title = metadata.title!
             print("setting title: \(self.title)")
+            bundle.author = metadata.creator!
             // TODO: store author in bundle
         } catch {
             print("error getting metadata \(error)")
