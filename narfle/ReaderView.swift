@@ -141,9 +141,8 @@ struct ReaderView: View {
 
         self.dir = bundleDir
         print("Extracted file to bundle directory: \(self.dir)")
-//        let title = EPUBArchive.getTitle(self.dir!)
-//        print("got title: \(title)")
-//        self.title = title!
+
+        // TODO: capture file type
 
         do {
             let metadata = try EPUBArchive.getMetadata(self.dir!)
@@ -151,6 +150,7 @@ struct ReaderView: View {
             self.title = metadata.title!
             bundle.title = metadata.title!
             print("setting title: \(self.title)")
+            // TODO: store author in bundle
         } catch {
             print("error getting metadata \(error)")
             
