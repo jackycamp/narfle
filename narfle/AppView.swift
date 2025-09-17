@@ -42,35 +42,6 @@ struct MainTabView: View {
     }
 }
 
-struct LibraryView: View {
-    @EnvironmentObject var appState: AppState 
-    @State private var showFilePicker = false
-
-    var body: some View {
-        VStack {
-            Text("Your Library")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-
-            Button(action: { showFilePicker = true }) {
-                Label("Browse files", systemImage: "folder")
-                    .font(.headline)
-                    .padding()
-                    .cornerRadius(10)
-            }
-        }
-        .sheet(isPresented: $showFilePicker) {
-            FilePicker { url in
-                print("picked!")
-                // TODO: once file is picked, need to process it, load it
-                // and then redirect to ReaderView
-                print("file picked: \(url)")
-                appState.selectedFile = url
-            }
-        }
-    }
-}
-
 struct FooView: View {
     var body: some View {
         VStack {
