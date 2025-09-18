@@ -9,7 +9,6 @@ import SwiftUI
 class AppState: ObservableObject {
     @Published var selectedFile: URL?
     @Published var pages: [[ContentElement]] = []
-    // @Published var pageIndex = 0
 }
 
 struct AppView: View {
@@ -22,7 +21,7 @@ struct AppView: View {
             } else {
                 MainTabView()
             }
-        }.environmentObject(appState) // inject state into environment
+        }.environmentObject(appState)
     }
 
 }
