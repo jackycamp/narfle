@@ -43,6 +43,8 @@ func readUInt32(data: Data, at offset: Int) -> UInt32 {
     }
 }
 
+// FIXME: should rename this module/struct to EPUBManager
+
 struct EPUBArchive {
     static func extract(from sourceUrl: URL, to destinationUrl: URL) throws {
         let logger = Logger.init()
