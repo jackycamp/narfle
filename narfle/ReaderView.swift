@@ -10,7 +10,6 @@ struct ReaderView: View {
     @EnvironmentObject var appState: AppState 
     @Environment(\.modelContext) private var modelContext
     @State private var dir: URL?
-    // @State private var htmlFiles: [String] = []
     @State private var pageIndex = 0 
     @State private var isLoading = true
     @State private var showControls = false
@@ -108,13 +107,6 @@ struct ReaderView: View {
         // - Set status of record to ready
         // - Render first page
 
-
-        // NOTE: Other things to note:
-        // - Perhaps the model that represents a "File" or "Book" or whatever
-        //   should be called NarfDoc or NarFile. Perhaps bundle makes sense here.
-        //   Consider: NarfBundle, NarfBdl, NarBdl, NarBundle. Leaning towards NarfBundle.
-        // - Then a service could be BundleManager or BundleProcessor
-
         let bundle = NarfBundle.init()
         let fileManager = FileManager.default
 
@@ -123,6 +115,9 @@ struct ReaderView: View {
         print("Using application support directory: \(appDir)")
 
         let bundleDir = appDir.appendingPathComponent(bundle.id.uuidString)
+        // FIXME: tighten this up
+        print("selected file path extension: \(appState.selectedFile!.pathExtension.lowercased())")
+        bundle.fileType = appState.selectedFile!.pathExtension.lowercased()
 
         do {
             print("Creating bundle directory: \(bundleDir)")
@@ -133,11 +128,6 @@ struct ReaderView: View {
             print("error: \(error)")
 
         }
-
-        // self.dir = EPUBArchive.extract(appState.selectedFile!)
-        // print("extracted file to \(self.dir)")
-        // self.htmlFiles = EPUBArchive.findHTMLFiles(self.dir!)
-        // print("found html files: \(self.htmlFiles)")
 
         self.dir = bundleDir
         print("Extracted file to bundle directory: \(self.dir)")
@@ -151,7 +141,6 @@ struct ReaderView: View {
             bundle.title = metadata.title!
             print("setting title: \(self.title)")
             bundle.author = metadata.creator!
-            // TODO: store author in bundle
         } catch {
             print("error getting metadata \(error)")
             
@@ -276,7 +265,6 @@ struct PageReaderView: View {
             }
         }
         .onAppear {
-            // loadPage()
             loadContent()
         }
     }
