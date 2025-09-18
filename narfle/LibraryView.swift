@@ -1,34 +1,41 @@
 import SwiftUI
 import SwiftData
+import os
 
 struct LibraryView: View {
     @EnvironmentObject var appState: AppState 
-    // @Query private var bundles: [NarfBundle]
     @Query(sort: \NarfBundle.lastOpened, order: .reverse) 
     private var bundles: [NarfBundle]
 
     @Environment(\.modelContext) private var modelContext
     @State private var showFilePicker = false
 
+    // TODO: route to bundle
+    // TODO: display cover of bundle
+
     var body: some View {
         VStack {
             Text("Your Library")
-                .font(.title)
+                .font(.title3)
                 .fontWeight(.bold)
 
-            List(bundles) { bundle in 
-                if let title = bundle.title {
-                    Text(title)
-                        .font(.headline)
-                }
-                
-                if let author = bundle.author {
-                    Text(author)
-                        .font(.caption)
-                }
+            List {
+                ForEach(bundles) { bundle in 
+                    VStack(alignment: .leading) {
+                        if let title = bundle.title {
+                            Text(title)
+                                .font(.headline)
+                        }
+                        
+                        if let author = bundle.author {
+                            Text(author)
+                                .font(.caption)
+                        }
 
-                Text(bundle.id.uuidString)
-                    .font(.caption2)
+                        Text(bundle.id.uuidString)
+                            .font(.caption2)
+                    }
+                }.onDelete(perform: deleteBundle)
             }
 
             Button(action: { showFilePicker = true }) {
@@ -40,12 +47,25 @@ struct LibraryView: View {
         }
         .sheet(isPresented: $showFilePicker) {
             FilePicker { url in
-                print("picked!")
-                // TODO: once file is picked, need to process it, load it
-                // and then redirect to ReaderView
-                print("file picked: \(url)")
                 appState.selectedFile = url
             }
+        }
+    }
+
+    private func deleteBundle(offsets: IndexSet) {
+        let logger = Logger.init()
+        for index in offsets {
+            let bundle: NarfBundle = bundles[index]
+            modelContext.delete(bundle)
+            logger.debug("Deleting bundle: \(bundle.id.uuidString)")
+        }
+
+        do {
+            try modelContext.save()
+            logger.debug("Deletion saved.")
+        } catch {
+            print("Failed to delete bundle: \(error)")
+            
         }
     }
 }
