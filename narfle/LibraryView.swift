@@ -58,6 +58,9 @@ struct LibraryView: View {
             let bundle: NarfBundle = bundles[index]
             modelContext.delete(bundle)
             logger.debug("Deleting bundle: \(bundle.id.uuidString)")
+
+            // FIXME: when deleting bundle, also need to clean up any artifacts
+            // in application support directory
         }
 
         do {
