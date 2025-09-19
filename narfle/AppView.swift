@@ -35,7 +35,7 @@ struct MainTabView: View {
             LibraryView()
                 .tabItem { Label("Library", systemImage: "books.vertical")}
 
-            FooView()
+            ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle")}
         }
     }
